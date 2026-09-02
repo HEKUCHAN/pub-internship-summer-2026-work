@@ -1,0 +1,15 @@
+version: 2
+
+seeds:
+  - name: gene_definition
+    description: 年代定義テーブル
+    columns:
+      - name: age_lower_limit
+        description: 年齢下限
+        column_type: number
+      - name: age_upper_limit
+        description: 年齢上限
+        column_type: number
+      - name: gene
+        description: 年代
+        column_type: varchar

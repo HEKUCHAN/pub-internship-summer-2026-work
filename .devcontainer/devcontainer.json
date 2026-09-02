@@ -1,0 +1,27 @@
+{
+    "name": "internship-development",
+    "build": {
+        "dockerfile": "Dockerfile"
+    },
+    "features": {
+        "ghcr.io/devcontainers/features/aws-cli:1": {},
+        "ghcr.io/devcontainers/features/git:1": {}
+      },
+    "customizations": {
+        "vscode": {
+            "settings": {
+                "terminal.integrated.shell.linux": "/bin/bash"
+            },
+            "extensions": [
+                "ms-python.python",
+                "eamodio.gitlens",
+                "EditorConfig.EditorConfig",
+                "mechatroner.rainbow-csv",
+                "snowflake.snowflake-vsc",
+                "amazonwebservices.aws-toolkit-vscode",
+            ]
+        }
+    },
+    "remoteUser": "vscode",
+    "postCreateCommand": "make setup"
+}

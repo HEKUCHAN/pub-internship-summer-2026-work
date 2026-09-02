@@ -1,0 +1,142 @@
+version: 2
+
+sources:
+  - name: rakuten_ec
+    database: SHARED_DB
+    schema: RAKUTEN_EC_RAW
+    tables:
+      - name: users
+        description: ユーザーマスタテーブル
+        columns:
+          - name: USER_ID
+            description: ユーザー固有のID
+          - name: GENDER_NAME
+            description: 購入者の性別 / 未回答で登録も可能であるため、その場合にNULL
+          - name: AGE
+            description: 購入者の年齢
+          - name: AGE_CATEGORY
+            description: 年齢カテゴリ
+          - name: STATE_NAME
+            description: 購入者の居住都道府県
+          - name: MARRIAGE_STATUS
+            description: 婚姻状況
+          - name: PROFESSION_NAME
+            description: 業種
+          - name: OCCUPATION_NAME
+            description: 職業
+
+      - name: ec_sites
+        description: ECサイトマスタテーブル
+        columns:
+          - name: EC_SITE_ID
+            description: ECサイト固有のID
+          - name: EC_SITE_NAME
+            description: ECサイト名
+
+      - name: stores
+        description: 店舗マスタテーブル
+        columns:
+          - name: STORE_ID
+            description: 店舗固有のID
+          - name: STORE_NAME
+            description: 店舗名
+          - name: EC_SITE_ID
+            description: 所属するECサイトのID（外部キー）
+
+      - name: categories
+        description: カテゴリマスタテーブル
+        columns:
+          - name: CATEGORY_ID
+            description: カテゴリ固有のID
+          - name: CATEGORY_NAME
+            description: カテゴリ名
+          - name: CATEGORY_LEVEL
+            description: カテゴリの階層レベル
+          - name: PARENT_CATEGORY_ID
+            description: 親カテゴリのID（外部キー、ルートカテゴリの場合NULL）
+
+      - name: items
+        description: 商品マスタテーブル
+        columns:
+          - name: ITEM_ID
+            description: 商品固有のID
+          - name: ITEM_NAME
+            description: 商品名
+          - name: ITEM_URL
+            description: 商品のURL / 商品が廃盤もしくはショップの閉店によりURLのリンクが無効となっている場合もあり
+          - name: STORE_ID
+            description: 商品を販売する店舗のID（外部キー）
+          - name: CATEGORY_ID
+            description: 商品が属するカテゴリのID（外部キー）
+
+      - name: purchases
+        description: 購買取引テーブル
+        columns:
+          - name: PURCHASE_ID
+            description: 購買取引固有のID
+          - name: MESSAGE_ID
+            description: メール単位に一意となるID / message_idのユニーク数＝メール数
+          - name: PURCHASED_AT
+            description: YYYY-MM-DD hh:mm:ss.sss +0900 / 購買取引が発生した日時
+          - name: USER_ID
+            description: 購買したユーザーのID（外部キー）
+          - name: DESTINATION_POSTAL_CODE
+            description: 商品の送付先郵便番号
+
+      - name: purchase_items
+        description: 購買商品明細テーブル
+        columns:
+          - name: PURCHASE_ITEM_ID
+            description: 購買商品明細固有のID
+          - name: PURCHASE_ID
+            description: 関連する購買取引のID（外部キー）
+          - name: ITEM_ID
+            description: 購買した商品のID（外部キー）
+          - name: UNIT_PRICE
+            description: 商品の単価
+          - name: AMOUNT
+            description: 購買数量
+          - name: TOTAL_PRICE
+            description: 合計金額（UNIT_PRICE × AMOUNT）
+
+  - name: training
+    database: TRAININGDB
+    schema: PUBLIC
+    tables:
+      - name: customers
+        description: 顧客テーブル
+        columns:
+          - name: customer_id
+            description: 顧客ID
+          - name: customer_name
+            description: 顧客名
+          - name: customer_age
+            description: 年齢
+          - name: customer_birthday
+            description: 誕生日
+          - name: customer_gender
+            description: 性別
+          - name: customer_location
+            description: 都道府県
+
+      - name: orders
+        description: 注文テーブル
+        columns:
+        - name: order_id
+          description: 注文ID
+        - name: order_time
+          description: 注文日時
+        - name: shop_id
+          description: 店舗ID
+        - name: customer_id
+          description: 顧客ID
+        - name: order_amount
+          description: 数量
+
+      - name: shops
+        description: 店舗マスタ
+        columns:
+        - name: shop_id
+          description: 店舗ID
+        - name: shop_name
+          description: 店舗名

@@ -1,0 +1,44 @@
+ds_intern:
+  target: work
+  outputs:
+    work:
+      type: snowflake
+      account: on44798-ds_5daysinternship_2026
+
+      user: "{{ env_var('SNOWFLAKE_USER') }}"
+      password: "{{ env_var('SNOWFLAKE_PASSWORD') }}"
+      authenticator: username_password_mfa
+      role: INTERNSHIP_MEMBER
+      database: "{{ env_var('TEAM_NAME') }}_DB"
+      warehouse: "{{ env_var('TEAM_NAME') }}_WH"
+      schema: "WORK_{{ env_var('SNOWFLAKE_USER') }}"
+      threads: 4
+      client_session_keep_alive: False
+
+    dev:
+      type: snowflake
+      account: on44798-ds_5daysinternship_2026
+
+      user: "{{ env_var('SNOWFLAKE_USER') }}"
+      password: "{{ env_var('SNOWFLAKE_PASSWORD') }}"
+      authenticator: username_password_mfa
+      role: INTERNSHIP_MEMBER
+      database: "{{ env_var('TEAM_NAME') }}_DB"
+      warehouse: "{{ env_var('TEAM_NAME') }}_WH"
+      schema: "DEVELOPMENT"
+      threads: 4
+      client_session_keep_alive: False
+
+    prod:
+      type: snowflake
+      account: on44798-ds_5daysinternship_2026
+
+      user: "{{ env_var('SNOWFLAKE_USER') }}"
+      password: "{{ env_var('SNOWFLAKE_PASSWORD') }}"
+      authenticator: username_password_mfa
+      role: INTERNSHIP_MEMBER
+      database: "{{ env_var('TEAM_NAME') }}_DB"
+      warehouse: "{{ env_var('TEAM_NAME') }}_WH"
+      schema: "PRODUCTION"
+      threads: 4
+      client_session_keep_alive: False

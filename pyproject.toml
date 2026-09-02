@@ -1,0 +1,13 @@
+[project]
+name = "ipj-internship-2025-work"
+version = "0.1.0"
+description = ""
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "boto3>=1.40.21",
+    "dbt-core>=1.9.8",
+    "dbt-snowflake>=1.9.1",
+    "snowflake-cli>=3.9.1",
+    "snowflake-connector-python>=3.17.0",
+]
