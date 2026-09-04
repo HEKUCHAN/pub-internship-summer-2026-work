@@ -1,0 +1,168 @@
+version: 2
+
+models:
+  - name: stg_users
+    description: "USERS を 1:1 でリネームした staging（購入者マスタ）。加工なし。"
+    columns:
+      - name: user_id_hash
+        description: 元 USER_ID（ナチュラルキー）
+        tests:
+          - not_null
+          - unique
+      - name: gender_name
+        description: 性別（未回答は NULL）
+      - name: age
+        description: 年齢
+      - name: state_name
+        description: 居住都道府県
+      - name: marriage_status
+        description: 婚姻状況
+      - name: profession_name
+        description: 業種
+      - name: occupation_name
+        description: 職業
+
+  - name: stg_ec_sites
+    description: "EC_SITES を 1:1 でリネームした staging。加工なし。"
+    columns:
+      - name: ec_site_id
+        description: ECサイト固有のID
+        tests:
+          - not_null
+          - unique
+      - name: ec_site_name
+        description: ECサイト名（今回は rakuten のみ）
+
+  - name: stg_stores
+    description: "STORES を 1:1 でリネームした staging（出店ショップ）。加工なし。"
+    columns:
+      - name: store_id
+        description: 店舗固有のID
+        tests:
+          - not_null
+          - unique
+      - name: store_name
+        description: 店舗名
+      - name: ec_site_id
+        description: 所属するECサイトのID（FK）
+        tests:
+          - relationships:
+              arguments:
+                to: ref('stg_ec_sites')
+                field: ec_site_id
+              config:
+                severity: warn
+
+  - name: stg_categories
+    description: "CATEGORIES を 1:1 でリネームした staging（カテゴリ階層・自己参照）。加工なし。"
+    columns:
+      - name: category_id
+        description: カテゴリ固有のID
+        tests:
+          - not_null
+          - unique
+      - name: category_name
+        description: カテゴリ名
+      - name: category_level
+        description: カテゴリの階層レベル
+      - name: parent_category_id
+        description: 親カテゴリのID（ルートは NULL）
+        tests:
+          - relationships:
+              arguments:
+                to: ref('stg_categories')
+                field: category_id
+              config:
+                severity: warn
+
+  - name: stg_items
+    description: "ITEMS を 1:1 でリネームした staging（商品マスタ）。名寄せは dim_item で行う。加工なし。"
+    columns:
+      - name: item_id
+        description: 商品固有のID
+        tests:
+          - not_null
+          - unique
+      - name: item_name
+        description: 商品名
+      - name: item_url
+        description: 商品のURL（名寄せの基準。無効リンクもあり得る）
+      - name: store_id
+        description: 販売店舗のID（FK）
+        tests:
+          - relationships:
+              arguments:
+                to: ref('stg_stores')
+                field: store_id
+              config:
+                severity: warn
+      - name: category_id
+        description: 商品が属するカテゴリのID（FK）
+        tests:
+          - relationships:
+              arguments:
+                to: ref('stg_categories')
+                field: category_id
+              config:
+                severity: warn
+
+  - name: stg_purchases
+    description: "PURCHASES を 1:1 でリネームした staging（購入ヘッダ）。加工なし。"
+    columns:
+      - name: purchase_id
+        description: 購買取引固有のID
+        tests:
+          - not_null
+          - unique
+      - name: purchased_at
+        description: 購買取引が発生した日時（TIMESTAMP_TZ）
+        tests:
+          - not_null
+      - name: user_id_hash
+        description: 購買したユーザーのID（FK → stg_users.user_id_hash）
+        tests:
+          - relationships:
+              arguments:
+                to: ref('stg_users')
+                field: user_id_hash
+              config:
+                severity: warn
+      - name: destination_postal_code
+        description: 商品の送付先郵便番号（先頭ゼロ保持のため文字列）
+
+  - name: stg_purchase_items
+    description: "PURCHASE_ITEMS を 1:1 でリネームした staging（購入明細＝最小粒度）。加工なし。"
+    columns:
+      - name: purchase_item_id
+        description: 購買商品明細固有のID
+        tests:
+          - not_null
+          - unique
+      - name: purchase_id
+        description: 関連する購買取引のID（FK → stg_purchases.purchase_id）
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_purchases')
+                field: purchase_id
+              config:
+                severity: warn
+      - name: item_id
+        description: 購買した商品のID（FK → stg_items.item_id）。ソースに NULL 明細が存在する
+        tests:
+          - not_null:
+              config:
+                severity: warn
+          - relationships:
+              arguments:
+                to: ref('stg_items')
+                field: item_id
+              config:
+                severity: warn
+      - name: unit_price
+        description: 商品の単価
+      - name: amount
+        description: 購買数量
+      - name: total_price
+        description: 合計金額（UNIT_PRICE × AMOUNT・ソース計算済み）

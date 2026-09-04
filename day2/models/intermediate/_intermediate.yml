@@ -1,0 +1,24 @@
+version: 2
+
+models:
+  - name: int_items__name_resolved
+    description: >
+      名寄せ後の商品マスタ。item_url を同一商品の基準とし、URL 単位で代表商品名を 1 つに集約する。
+      grain: 1 item_url = 1 行（item_url が NULL の行は除外）。dim_item はこれを受け取るだけの薄い層になる。
+    columns:
+      - name: item_key
+        description: item_url から採番したサロゲートキー（同一 URL = 同一キー）
+        tests:
+          - not_null
+          - unique
+      - name: item_url
+        description: 名寄せの基準となる商品ページ URL（ナチュラルキー）
+        tests:
+          - not_null
+          - unique
+      - name: item_name
+        description: 名寄せ後の代表商品名（先頭の販促枠を除去し、URL 内で最頻の掃除後名を採用）
+        tests:
+          - not_null
+      - name: category_id
+        description: 商品カテゴリ ID（URL 内で一意。階層の平坦化は int_categories_flatten 側）

@@ -1,0 +1,15 @@
+version: 2
+
+seeds:
+  - name: prefecture_region
+    description: 都道府県 → 8地方の対応表（設計書 §7。巨大 CASE の代替）。state_name の未知値・空欄は未マッチ
+    columns:
+      - name: state_name
+        description: 都道府県名（stg_users.state_name と一致させる）
+        tests:
+          - not_null
+          - unique
+      - name: region_name
+        description: 8地方区分（北海道/東北/関東/中部/近畿/中国/四国/九州）＋不明
+        tests:
+          - not_null

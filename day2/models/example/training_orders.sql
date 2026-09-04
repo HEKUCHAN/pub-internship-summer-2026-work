@@ -8,10 +8,10 @@ with load_order as (
 join_customer as (
     select
         t1.*,
-        -- 列を追加しよう
+        t2.customer_name
     from
         load_order as t1
-        -- customerをjoinしてみよう
+        left join {{ source('training', 'customers') }} as t2 on t1.customer_id = t2.customer_id
 ),
 
 final as (
@@ -22,4 +22,4 @@ final as (
 )
 
 select *
-from final 
+from final

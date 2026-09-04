@@ -1,0 +1,55 @@
+version: 2
+
+models:
+  - name: dim_date
+    description: 日付ディメンション（1日＝1行）
+    columns:
+      - name: date_key
+        tests: [not_null, unique]
+
+  - name: dim_user
+    description: ユーザディメンション（1ユーザ＝1行・履歴なし）。age_category は gene_definition、region_name は prefecture_region で導出
+    columns:
+      - name: user_key
+        tests: [not_null, unique]
+      - name: user_id_hash
+        tests: [not_null, unique]
+
+  - name: dim_store
+    description: 店舗ディメンション（1店舗＝1行、EC_SITES を非正規化）
+    columns:
+      - name: store_key
+        tests: [not_null, unique]
+      - name: store_id
+        tests: [not_null, unique]
+
+  - name: dim_item
+    description: 商品ディメンション（1 item_url＝1行、名寄せ後）。カテゴリ階層を結合
+    columns:
+      - name: item_key
+        tests: [not_null, unique]
+      - name: item_url
+        tests: [not_null, unique]
+
+  - name: fct_purchase_item
+    description: 購入明細ファクト（1明細＝1行・全 1,694,437 行）
+    columns:
+      - name: purchase_item_id
+        tests: [not_null, unique]
+
+  - name: mart_rakuten_ec
+    description: >
+      大福帳。テーブル定義.xlsx の23列（message_id を除く）＋ 派生5列
+      （full_date / month_date / region / is_discount / discount_amount）。
+      instructor 回答④により category_level_1 が NULL の行は削除済み。
+    columns:
+      - name: id
+        description: レコード単位の通番（= purchase_item_id）
+        tests: [not_null, unique]
+      - name: category_level_1
+        description: 商品カテゴリ第1階層（NULL 行は除外済み）
+        tests: [not_null]
+      - name: month_date
+        description: 購入月＝月初日（date 型）
+      - name: age_category
+        description: 年代（age から導出。age が NULL なら NULL）

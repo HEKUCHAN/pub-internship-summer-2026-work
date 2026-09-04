@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>楽天EC 大福帳 テーブル設計</title>
+<style>
+  :root{
+    --paper:#F5F7F9; --card:#FFFFFF; --ink:#1B2430; --muted:#6B7480;
+    --line:#E4E8EC; --line2:#EDF0F3;
+    --teal:#12856A; --teal-bg:#E3F1EC; --teal-ink:#0C5E4B;
+    --indigo:#5B54C9; --indigo-bg:#EAE8FA; --indigo-ink:#3F39A3;
+    --amber:#B5730B; --amber-bg:#FBF0DD; --amber-ink:#8A5709;
+    --rose-bg:#FBE7EA; --rose-ink:#A83246;
+    --slate-bg:#EEF0F3; --slate-ink:#4A505A;
+    --sans:"Hiragino Kaku Gothic ProN","Hiragino Sans","Noto Sans JP","BIZ UDPGothic",Meiryo,system-ui,sans-serif;
+    --mono:"SFMono-Regular","SF Mono","JetBrains Mono",Menlo,Consolas,"Courier New",monospace;
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);
+    line-height:1.75;font-size:16px;letter-spacing:.01em}
+  .wrap{max-width:1180px;margin:0 auto;padding:0 24px}
+  a{color:var(--teal);text-underline-offset:3px}
+  header{padding:64px 0 40px;border-bottom:1px solid var(--line)}
+  .kicker{font-size:13px;color:var(--muted);font-weight:600;margin:0 0 14px}
+  h1{font-size:clamp(30px,5.2vw,52px);line-height:1.12;font-weight:800;letter-spacing:-.02em;margin:0 0 18px}
+  .thesis{font-size:clamp(16px,2.3vw,20px);color:#39424f;max-width:60ch;margin:0 0 26px;font-weight:500}
+  .thesis b{color:var(--teal);font-weight:700}
+  .chips{display:flex;flex-wrap:wrap;gap:8px}
+  .chip{font-size:12.5px;font-weight:600;color:var(--slate-ink);background:var(--card);border:1px solid var(--line);border-radius:999px;padding:5px 12px}
+  .chip .mono{font-family:var(--mono);font-size:12px}
+  .grid{display:grid;grid-template-columns:210px minmax(0,1fr);gap:48px;padding:44px 0 80px}
+  nav.toc{position:sticky;top:24px;align-self:start;font-size:13.5px;height:max-content}
+  nav.toc ol{list-style:none;margin:0;padding:0}
+  nav.toc li{margin:0 0 2px}
+  nav.toc a{display:block;color:var(--muted);text-decoration:none;padding:5px 10px;border-radius:7px;border-left:2px solid transparent}
+  nav.toc a:hover{color:var(--ink);background:var(--card)}
+  nav.toc a:focus-visible{outline:2px solid var(--teal);outline-offset:1px}
+  main{min-width:0}
+  section{padding:14px 0 30px;scroll-margin-top:20px}
+  h2{font-size:24px;font-weight:800;letter-spacing:-.01em;margin:36px 0 6px;padding-left:14px;border-left:4px solid var(--teal);line-height:1.3}
+  h2 .n{color:var(--muted);font-weight:700;font-size:17px;margin-right:8px;font-family:var(--mono)}
+  h3{font-size:16.5px;font-weight:700;margin:26px 0 8px;color:#2a333f}
+  h3 .m{font-family:var(--mono);color:var(--teal);font-size:15px}
+  p{margin:10px 0;max-width:74ch}
+  .lead{color:#39424f}
+  .muted{color:var(--muted)}
+  figure{margin:22px 0;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px;overflow-x:auto}
+  figure svg{display:block;width:100%;height:auto;min-width:340px}
+  figure.wide svg{min-width:720px}
+  figcaption{margin-top:12px;font-size:13px;color:var(--muted);line-height:1.6}
+  svg text{font-family:var(--sans)}
+  .legend{display:flex;flex-wrap:wrap;gap:16px;margin-top:12px;font-size:12.5px;color:var(--slate-ink)}
+  .legend span{display:inline-flex;align-items:center;gap:7px}
+  .sw{width:13px;height:13px;border-radius:4px;border:1px solid rgba(0,0,0,.12)}
+  .tbl{width:100%;border-collapse:collapse;margin:14px 0;font-size:14px;background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  .tbl th,.tbl td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--line2);vertical-align:top}
+  .tbl thead th{background:#F0F3F6;font-size:12.5px;color:var(--slate-ink);font-weight:700;border-bottom:1px solid var(--line)}
+  .tbl tr:last-child td{border-bottom:none}
+  .tbl code,.mono{font-family:var(--mono);font-size:13px}
+  .tbl td code{color:#0f2b4a;background:#F3F6F9;padding:1px 6px;border-radius:5px;white-space:nowrap}
+  .tbl .t{white-space:nowrap;color:var(--muted);font-family:var(--mono);font-size:12.5px}
+  .tbl.src td:first-child code{color:#3a2a08;background:#F6F2EA}
+  .pill{display:inline-block;font-size:11px;line-height:1.5;padding:1px 8px;border-radius:999px;font-weight:700;white-space:nowrap}
+  .pill.key{background:var(--indigo-bg);color:var(--indigo-ink)}
+  .pill.fk{background:var(--teal-bg);color:var(--teal-ink)}
+  .pill.nat,.pill.deg{background:var(--slate-bg);color:var(--slate-ink)}
+  .pill.der{background:var(--amber-bg);color:var(--amber-ink)}
+  .pill.fact{background:var(--rose-bg);color:var(--rose-ink)}
+  .note{background:var(--amber-bg);border:1px solid #EAD7AE;border-left:4px solid var(--amber);border-radius:10px;padding:14px 18px;margin:18px 0;font-size:14.5px;color:#5f4410}
+  .note b{color:var(--amber-ink)}
+  .key-insight{background:var(--indigo-bg);border:1px solid #D6D2F4;border-left:4px solid var(--indigo);border-radius:10px;padding:14px 18px;margin:18px 0;font-size:14.5px;color:#2f2b6b}
+  pre{background:#0f1722;color:#dbe4ef;border-radius:12px;padding:16px 18px;overflow-x:auto;font-family:var(--mono);font-size:12.5px;line-height:1.6;margin:12px 0}
+  .sqlname{font-family:var(--mono);font-size:13px;color:var(--teal);font-weight:700;margin:22px 0 0}
+  footer{border-top:1px solid var(--line);padding:26px 0 60px;color:var(--muted);font-size:13px}
+  @media(max-width:860px){
+    .grid{grid-template-columns:1fr;gap:0;padding-top:24px}
+    nav.toc{position:static;margin-bottom:8px;border:1px solid var(--line);border-radius:12px;background:var(--card);padding:10px}
+    nav.toc ol{columns:2;column-gap:12px}
+    header{padding:44px 0 30px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <p class="kicker">先進情報プロジェクト演習 I — テーブル設計書</p>
+  <h1>楽天EC 大福帳 テーブル設計</h1>
+  <p class="thesis">楽天市場の3NF購入データを加工し、分析用の大福帳を作る。ポイントは1つ ——
+    <b>大福帳はスタースキーマをJOINして平たくしたものそのもの</b>。star を中間層に組めば、最後に結合すれば大福帳になる。</p>
+  <div class="chips">
+    <span class="chip">Snowflake ＋ dbt</span>
+    <span class="chip">source <span class="mono">rakuten_ec</span></span>
+    <span class="chip">project <span class="mono">ds_intern</span></span>
+    <span class="chip">粒度 = 購入明細（1行）</span>
+  </div>
+</header>
+
+<div class="grid">
+  <nav class="toc" aria-label="目次">
+    <ol>
+      <li><a href="#overview">全体方針</a></li>
+      <li><a href="#star">スタースキーマ</a></li>
+      <li><a href="#source">元データ 7表</a></li>
+      <li><a href="#naming">命名規則</a></li>
+      <li><a href="#schema">配置スキーマ</a></li>
+      <li><a href="#dims">ディメンション定義</a></li>
+      <li><a href="#fact">ファクト定義</a></li>
+      <li><a href="#mart">大福帳 28列</a></li>
+      <li><a href="#rules">派生ルール</a></li>
+      <li><a href="#dag">ビルド順・DAG</a></li>
+      <li><a href="#sql">実装 SQL</a></li>
+    </ol>
+  </nav>
+
+  <main>
+
+  <section id="overview">
+    <h2><span class="n">1</span>全体方針</h2>
+    <p class="lead">第3正規化された元データ（<code class="mono">SHARED_DB.RAKUTEN_EC_RAW</code>）を加工し、
+      <code class="mono">テーブル定義.xlsx</code> に準拠した大福帳を作る。作り方は2層構成。まず
+      <b>スタースキーマ（ファクト1本＋ディメンション4本）</b>を中間層に組み、それを全部JOINして
+      <b>大福帳（最終マート）</b>に平坦化する。</p>
+
+    <figure aria-label="元データからスタースキーマを経て大福帳になる流れ">
+      <svg viewBox="0 0 480 500" role="img">
+        <title>全体像：元データ→スタースキーマ→大福帳</title>
+        <defs><marker id="ah1" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+          <path d="M2 1L8 5L2 9" fill="none" stroke="#9AA0A8" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
+        <rect x="40" y="30" width="400" height="80" rx="14" fill="#ECEEF1" stroke="#B9BEC6"/>
+        <text x="240" y="64" text-anchor="middle" font-size="16.5" font-weight="700" fill="#333A44">① 元データ（3NF・7テーブル）</text>
+        <text x="240" y="90" text-anchor="middle" font-size="13" fill="#5A616B">SHARED_DB.RAKUTEN_EC_RAW ／ 与えられている</text>
+        <line x1="240" y1="110" x2="240" y2="148" stroke="#9AA0A8" stroke-width="1.4" marker-end="url(#ah1)"/>
+        <rect x="40" y="150" width="400" height="90" rx="14" fill="#E3F1EC" stroke="#12856A"/>
+        <text x="240" y="182" text-anchor="middle" font-size="16.5" font-weight="700" fill="#0C5E4B">② スタースキーマ（あなたが作る）</text>
+        <text x="240" y="206" text-anchor="middle" font-size="12.5" fill="#0C5E4B" font-family="var(--mono)">DIM_DATE / DIM_USER / DIM_ITEM / DIM_STORE</text>
+        <text x="240" y="225" text-anchor="middle" font-size="12.5" fill="#0C5E4B" font-family="var(--mono)">＋ FCT_PURCHASE_ITEM</text>
+        <line x1="240" y1="240" x2="240" y2="278" stroke="#9AA0A8" stroke-width="1.4" marker-end="url(#ah1)"/>
+        <rect x="40" y="280" width="400" height="90" rx="14" fill="#D8EDE4" stroke="#0C6E58" stroke-width="1.5"/>
+        <text x="240" y="312" text-anchor="middle" font-size="16.5" font-weight="800" fill="#0A5545">③ 大福帳（最終テーブル・28列）</text>
+        <text x="240" y="335" text-anchor="middle" font-size="13" fill="#0C5E4B">②を全部JOINして1枚に平坦化</text>
+        <text x="240" y="355" text-anchor="middle" font-size="12.5" fill="#0A5545" font-weight="700">← 提出物</text>
+        <line x1="240" y1="370" x2="240" y2="402" stroke="#B5730B" stroke-width="1.3" stroke-dasharray="4 4"/>
+        <rect x="40" y="404" width="400" height="66" rx="14" fill="#FBF0DD" stroke="#D9A84E"/>
+        <text x="240" y="432" text-anchor="middle" font-size="15.5" font-weight="700" fill="#8A5709">テーブル定義.xlsx</text>
+        <text x="240" y="453" text-anchor="middle" font-size="12.5" fill="#8A5709">③の列構成の設計図（与えられている）</text>
+      </svg>
+      <div class="legend">
+        <span><span class="sw" style="background:#ECEEF1;border-color:#B9BEC6"></span>与えられている</span>
+        <span><span class="sw" style="background:#E3F1EC;border-color:#12856A"></span>あなたが作る</span>
+        <span><span class="sw" style="background:#FBF0DD;border-color:#D9A84E"></span>仕様（設計図）</span>
+      </div>
+    </figure>
+  </section>
+
+  <section id="star">
+    <h2><span class="n">2</span>スタースキーマ</h2>
+    <p class="lead">中心が <code class="mono">fct_purchase_item</code>、周囲を4つのディメンションが囲む。
+      <span class="mono">★</span>＝この課題で新しく加工して付ける列、<span class="mono">◆</span>＝数値の事実（measure）。</p>
+    <figure class="wide" aria-label="スタースキーマ図">
+      <svg viewBox="0 0 680 620" role="img">
+        <title>楽天EC スタースキーマ</title>
+        <line x1="340" y1="150" x2="340" y2="235" stroke="#B4B9C0"/>
+        <line x1="215" y1="332" x2="240" y2="345" stroke="#B4B9C0"/>
+        <line x1="440" y1="345" x2="460" y2="315" stroke="#B4B9C0"/>
+        <line x1="340" y1="470" x2="340" y2="500" stroke="#B4B9C0"/>
+        <rect x="245" y="40" width="190" height="110" rx="10" fill="#E3F1EC" stroke="#12856A"/>
+        <text x="259" y="62" font-size="14" font-weight="700" fill="#0C5E4B">DIM_DATE</text>
+        <text x="259" y="82" font-size="12" fill="#155f4d" font-family="var(--mono)">PK  date_key</text>
+        <text x="259" y="100" font-size="12" fill="#155f4d" font-family="var(--mono)">購入日 purchase_date ★</text>
+        <text x="259" y="118" font-size="12" fill="#155f4d" font-family="var(--mono)">購入月 purchase_month ★</text>
+        <text x="259" y="136" font-size="12" fill="#155f4d" font-family="var(--mono)">year / month / day</text>
+        <rect x="40" y="250" width="175" height="165" rx="10" fill="#E3F1EC" stroke="#12856A"/>
+        <text x="54" y="272" font-size="14" font-weight="700" fill="#0C5E4B">DIM_USER</text>
+        <text x="54" y="292" font-size="12" fill="#155f4d" font-family="var(--mono)">PK  user_key</text>
+        <text x="54" y="310" font-size="12" fill="#155f4d" font-family="var(--mono)">user_id_hash</text>
+        <text x="54" y="328" font-size="12" fill="#155f4d" font-family="var(--mono)">gender_name, age</text>
+        <text x="54" y="346" font-size="12" fill="#155f4d" font-family="var(--mono)">age_category ★</text>
+        <text x="54" y="364" font-size="12" fill="#155f4d" font-family="var(--mono)">state_name</text>
+        <text x="54" y="382" font-size="12" fill="#155f4d" font-family="var(--mono)">region_name ★</text>
+        <text x="54" y="400" font-size="12" fill="#155f4d" font-family="var(--mono)">marriage_status 他</text>
+        <rect x="460" y="250" width="180" height="130" rx="10" fill="#E3F1EC" stroke="#12856A"/>
+        <text x="474" y="272" font-size="14" font-weight="700" fill="#0C5E4B">DIM_ITEM</text>
+        <text x="474" y="292" font-size="12" fill="#155f4d" font-family="var(--mono)">PK  item_key</text>
+        <text x="474" y="310" font-size="12" fill="#155f4d" font-family="var(--mono)">item_url ★</text>
+        <text x="474" y="328" font-size="12" fill="#155f4d" font-family="var(--mono)">item_name ★</text>
+        <text x="474" y="346" font-size="12" fill="#155f4d" font-family="var(--mono)">category_level_1 ★</text>
+        <text x="474" y="364" font-size="12" fill="#155f4d" font-family="var(--mono)">category_level_2〜4</text>
+        <rect x="240" y="235" width="200" height="235" rx="10" fill="#EAE8FA" stroke="#5B54C9" stroke-width="1.5"/>
+        <text x="254" y="258" font-size="14" font-weight="800" fill="#3F39A3">FCT_PURCHASE_ITEM</text>
+        <text x="254" y="277" font-size="12" fill="#463fb0">粒度: 1明細 = 1行</text>
+        <text x="254" y="299" font-size="12" fill="#463fb0" font-family="var(--mono)">PK purchase_item_id</text>
+        <text x="254" y="317" font-size="12" fill="#463fb0" font-family="var(--mono)">FK date_key</text>
+        <text x="254" y="335" font-size="12" fill="#463fb0" font-family="var(--mono)">FK user_key</text>
+        <text x="254" y="353" font-size="12" fill="#463fb0" font-family="var(--mono)">FK item_key</text>
+        <text x="254" y="371" font-size="12" fill="#463fb0" font-family="var(--mono)">FK store_key</text>
+        <line x1="252" y1="381" x2="428" y2="381" stroke="#B7B2E6"/>
+        <text x="254" y="399" font-size="12" fill="#463fb0" font-family="var(--mono)">◆ unit_price, amount</text>
+        <text x="254" y="417" font-size="12" fill="#463fb0" font-family="var(--mono)">◆ total_price</text>
+        <text x="254" y="435" font-size="12" fill="#463fb0" font-family="var(--mono)">◆ discount_amount ★</text>
+        <text x="254" y="453" font-size="12" fill="#463fb0" font-family="var(--mono)">◆ discount_flag ★</text>
+        <rect x="245" y="500" width="190" height="95" rx="10" fill="#E3F1EC" stroke="#12856A"/>
+        <text x="259" y="522" font-size="14" font-weight="700" fill="#0C5E4B">DIM_STORE</text>
+        <text x="259" y="542" font-size="12" fill="#155f4d" font-family="var(--mono)">PK  store_key</text>
+        <text x="259" y="560" font-size="12" fill="#155f4d" font-family="var(--mono)">store_name</text>
+        <text x="259" y="578" font-size="12" fill="#155f4d" font-family="var(--mono)">ec_site_name</text>
+      </svg>
+      <figcaption>単価・割引額・割引フラグは「取引ごとに変わる」ためディメンションではなくファクトに置く。名寄せの基準 <code>item_url</code> は DIM_ITEM の自然キーになる。</figcaption>
+    </figure>
+    <div class="key-insight"><b>設計の肝：</b>割引額は「同一商品（同一 <code>item_url</code>）の最大単価との差」。同じ商品でも取引ごとに単価が違うことが前提なので、単価を商品マスタに入れると破綻する。だから <code>unit_price</code>・<code>discount_amount</code>・<code>discount_flag</code> は取引レベル＝ファクトに置く。</div>
+  </section>
+
+  <section id="source">
+    <h2><span class="n">3</span>元データ（3NF・7テーブル）</h2>
+    <p class="muted"><code class="mono">SHARED_DB.RAKUTEN_EC_RAW</code>（読み取り専用・dbt では source <code class="mono">rakuten_ec</code> として参照）。</p>
+    <table class="tbl src">
+      <thead><tr><th>テーブル</th><th>主キー</th><th>主な列</th><th>役割</th></tr></thead>
+      <tbody>
+        <tr><td><code>USERS</code></td><td><code>USER_ID</code></td><td class="mono" style="font-size:12.5px">GENDER_NAME, AGE, AGE_CATEGORY, STATE_NAME, MARRIAGE_STATUS, PROFESSION_NAME, OCCUPATION_NAME</td><td>購入者</td></tr>
+        <tr><td><code>EC_SITES</code></td><td><code>EC_SITE_ID</code></td><td class="mono" style="font-size:12.5px">EC_SITE_NAME</td><td>ECサイト</td></tr>
+        <tr><td><code>STORES</code></td><td><code>STORE_ID</code></td><td class="mono" style="font-size:12.5px">STORE_NAME, EC_SITE_ID(FK)</td><td>出店ショップ</td></tr>
+        <tr><td><code>CATEGORIES</code></td><td><code>CATEGORY_ID</code></td><td class="mono" style="font-size:12.5px">CATEGORY_NAME, CATEGORY_LEVEL, PARENT_CATEGORY_ID(FK・自己参照)</td><td>カテゴリ階層</td></tr>
+        <tr><td><code>ITEMS</code></td><td><code>ITEM_ID</code></td><td class="mono" style="font-size:12.5px">ITEM_NAME, ITEM_URL, STORE_ID(FK), CATEGORY_ID(FK)</td><td>商品</td></tr>
+        <tr><td><code>PURCHASES</code></td><td><code>PURCHASE_ID</code></td><td class="mono" style="font-size:12.5px">MESSAGE_ID, PURCHASED_AT, USER_ID(FK), DESTINATION_POSTAL_CODE</td><td>購入ヘッダ</td></tr>
+        <tr><td><code>PURCHASE_ITEMS</code></td><td><code>PURCHASE_ITEM_ID</code></td><td class="mono" style="font-size:12.5px">PURCHASE_ID(FK), ITEM_ID(FK), UNIT_PRICE, AMOUNT, TOTAL_PRICE</td><td>購入明細（＝粒度）</td></tr>
+      </tbody>
+    </table>
+    <div class="note"><b>ER図と実ソースの差異：</b><code>USERS</code> には ER図に無い <code>AGE_CATEGORY</code> 列が実在する。ただし要件は「年齢を10歳ごとにまとめる＝自前で導出せよ」と明記しているため、<code>age_category</code> は <code>dim_user</code> で導出する（ソースの列は使わず、必要なら検算に使う）。<code>PURCHASE_ITEMS.TOTAL_PRICE</code> もソース計算済みのため <code>total_price</code> は自前計算・通しどちらでも可。</div>
+  </section>
+
+  <section id="naming">
+    <h2><span class="n">4</span>命名規則</h2>
+    <table class="tbl">
+      <thead><tr><th>対象</th><th>ルール</th><th>例</th></tr></thead>
+      <tbody>
+        <tr><td>層の接頭辞</td><td>staging→intermediate→marts で <code>stg_</code>／<code>int_</code>／<code>dim_</code>・<code>fct_</code></td><td><code>stg_items</code>, <code>dim_item</code></td></tr>
+        <tr><td>ディメンション</td><td>モノ＝名詞・単数で <code>dim_</code></td><td><code>dim_user</code></td></tr>
+        <tr><td>ファクト</td><td>コト＝出来事で <code>fct_</code></td><td><code>fct_purchase_item</code></td></tr>
+        <tr><td>サロゲートキー</td><td>新規採番する一意ラベル <code>&lt;対象&gt;_key</code></td><td><code>user_key</code></td></tr>
+        <tr><td>ナチュラルキー</td><td>元データ本来のキーは名前を変えず保持</td><td><code>item_url</code></td></tr>
+        <tr><td>出力列</td><td>大福帳の列は <code>テーブル定義.xlsx</code> の命名に厳密一致（<code>_name</code>／<code>_category</code> 等）</td><td><code>state_name</code></td></tr>
+      </tbody>
+    </table>
+    <div class="note"><b>派生列は「出力の命名」に合わせる。</b>都道府県は定義どおり <code>state_name</code>（<code>prefecture</code> にはしない ← 定義がある列は定義を優先）。地方はそれに倣って <code>region_name</code>。購入日／購入月は <code>purchase_date</code>／<code>purchase_month</code>、割引フラグは <code>discount_flag</code>、割引額は <code>discount_amount</code>。</div>
+  </section>
+
+  <section id="schema">
+    <h2><span class="n">5</span>配置スキーマ（Snowflake）</h2>
+    <table class="tbl">
+      <thead><tr><th>層</th><th>配置</th><th>備考</th></tr></thead>
+      <tbody>
+        <tr><td>元データ</td><td><code>SHARED_DB.RAKUTEN_EC_RAW</code></td><td>dbt では source として参照。読み取り専用</td></tr>
+        <tr><td>staging / intermediate / marts</td><td>自分のDB・スキーマ</td><td>dbt の target schema。層ごとにスキーマを分ける構成も可</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="dims">
+    <h2><span class="n">6</span>ディメンション定義</h2>
+    <h3><span class="m">dim_date</span> — 日付ディメンション</h3>
+    <table class="tbl">
+      <thead><tr><th>物理名</th><th>型</th><th>種別</th><th>定義</th></tr></thead>
+      <tbody>
+        <tr><td><code>date_key</code></td><td class="t">NUMBER</td><td><span class="pill key">PK</span></td><td>日付キー（例 20230402）</td></tr>
+        <tr><td><code>purchase_date</code></td><td class="t">DATE</td><td><span class="pill der">派生</span></td><td>購入日 <code>purchased_at::date</code></td></tr>
+        <tr><td><code>purchase_month</code></td><td class="t">DATE</td><td><span class="pill der">派生</span></td><td>購入月＝月初日 <code>date_trunc('month',…)</code></td></tr>
+        <tr><td><code>year / month / day</code></td><td class="t">NUMBER</td><td></td><td>年・月・日</td></tr>
+      </tbody>
+    </table>
+    <h3><span class="m">dim_user</span> — ユーザディメンション</h3>
+    <table class="tbl">
+      <thead><tr><th>物理名</th><th>型</th><th>種別</th><th>定義</th></tr></thead>
+      <tbody>
+        <tr><td><code>user_key</code></td><td class="t">NUMBER</td><td><span class="pill key">PK</span></td><td>採番キー</td></tr>
+        <tr><td><code>user_id_hash</code></td><td class="t">VARCHAR</td><td><span class="pill nat">自然キー</span></td><td>元 <code>USER_ID</code></td></tr>
+        <tr><td><code>gender_name</code></td><td class="t">VARCHAR</td><td></td><td>性別（未回答は NULL）</td></tr>
+        <tr><td><code>age</code></td><td class="t">NUMBER</td><td></td><td>年齢</td></tr>
+        <tr><td><code>age_category</code></td><td class="t">VARCHAR</td><td><span class="pill der">派生</span></td><td>年代。<code>gene_definition</code> シードに範囲 LEFT JOIN</td></tr>
+        <tr><td><code>state_name</code></td><td class="t">VARCHAR</td><td></td><td>居住都道府県（出力定義どおり）</td></tr>
+        <tr><td><code>region_name</code></td><td class="t">VARCHAR</td><td><span class="pill der">派生</span></td><td>地方。<code>prefecture_region</code> シードに <code>state_name</code> で LEFT JOIN</td></tr>
+        <tr><td><code>marriage_status / profession_name / occupation_name</code></td><td class="t">VARCHAR</td><td></td><td>婚姻状況・業種・職業</td></tr>
+      </tbody>
+    </table>
+    <h3><span class="m">dim_item</span> — 商品ディメンション（名寄せ後）</h3>
+    <p class="muted">粒度：1商品＝<code class="mono">item_url</code> 単位で1行。<b>名寄せとカテゴリ1 NULL 除外をここで行う。</b></p>
+    <table class="tbl">
+      <thead><tr><th>物理名</th><th>型</th><th>種別</th><th>定義</th></tr></thead>
+      <tbody>
+        <tr><td><code>item_key</code></td><td class="t">NUMBER</td><td><span class="pill key">PK</span></td><td>採番キー</td></tr>
+        <tr><td><code>item_url</code></td><td class="t">VARCHAR</td><td><span class="pill nat">自然キー</span></td><td>名寄せの基準（同一URL＝同一商品）</td></tr>
+        <tr><td><code>item_name</code></td><td class="t">VARCHAR</td><td><span class="pill der">派生</span></td><td>名寄せ後の代表商品名（URL単位で1つ）</td></tr>
+        <tr><td><code>category_level_1</code></td><td class="t">VARCHAR</td><td></td><td>第1階層。<b>NULL の商品はこの段で除外</b></td></tr>
+        <tr><td><code>category_level_2〜4</code></td><td class="t">VARCHAR</td><td></td><td>第2〜4階層カテゴリ</td></tr>
+      </tbody>
+    </table>
+    <h3><span class="m">dim_store</span> — 店舗ディメンション</h3>
+    <table class="tbl">
+      <thead><tr><th>物理名</th><th>型</th><th>種別</th><th>定義</th></tr></thead>
+      <tbody>
+        <tr><td><code>store_key</code></td><td class="t">NUMBER</td><td><span class="pill key">PK</span></td><td>採番キー</td></tr>
+        <tr><td><code>store_id</code></td><td class="t">NUMBER</td><td><span class="pill nat">自然キー</span></td><td>元 <code>STORE_ID</code></td></tr>
+        <tr><td><code>store_name</code></td><td class="t">VARCHAR</td><td></td><td>店舗名</td></tr>
+        <tr><td><code>ec_site_name</code></td><td class="t">VARCHAR</td><td></td><td><code>EC_SITES</code> を結合して非正規化（rakuten 固定）</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="fact">
+    <h2><span class="n">7</span>ファクト定義</h2>
+    <h3><span class="m">fct_purchase_item</span> — 購入明細ファクト（星の中心）</h3>
+    <table class="tbl">
+      <thead><tr><th>物理名</th><th>型</th><th>種別</th><th>定義</th></tr></thead>
+      <tbody>
+        <tr><td><code>purchase_item_id</code></td><td class="t">NUMBER</td><td><span class="pill deg">縮退</span></td><td>明細の自然キー（大福帳 <code>id</code> の元）</td></tr>
+        <tr><td><code>purchase_id</code></td><td class="t">NUMBER</td><td><span class="pill deg">縮退</span></td><td>注文単位</td></tr>
+        <tr><td><code>message_id</code></td><td class="t">VARCHAR</td><td><span class="pill deg">縮退</span></td><td>メール単位</td></tr>
+        <tr><td><code>purchased_at</code></td><td class="t">TIMESTAMP</td><td></td><td>購買日時（大福帳へそのまま）</td></tr>
+        <tr><td><code>date_key / user_key / item_key / store_key</code></td><td class="t">NUMBER</td><td><span class="pill fk">FK</span></td><td>各ディメンションへの外部キー</td></tr>
+        <tr><td><code>destination_postal_code</code></td><td class="t">VARCHAR</td><td><span class="pill deg">縮退</span></td><td>配送先郵便番号</td></tr>
+        <tr><td><code>unit_price / amount</code></td><td class="t">NUMBER</td><td><span class="pill fact">事実</span></td><td>商品単価・購買数量</td></tr>
+        <tr><td><code>total_price</code></td><td class="t">NUMBER</td><td><span class="pill fact">事実</span></td><td>合計購入金額 <code>unit_price * amount</code></td></tr>
+        <tr><td><code>discount_amount</code></td><td class="t">NUMBER</td><td><span class="pill fact">事実</span></td><td>割引額 <code>max(unit_price) over(partition by item_url) - unit_price</code></td></tr>
+        <tr><td><code>discount_flag</code></td><td class="t">BOOLEAN</td><td><span class="pill fact">事実</span></td><td>割引フラグ <code>item_name ilike '%セール%'</code>（生の名前から判定）</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="mart">
+    <h2><span class="n">8</span>大福帳（最終マート・28列）</h2>
+    <p class="lead">ファクトに全ディメンションを JOIN して平坦化。<code class="mono">テーブル定義.xlsx</code> の23列＋要件で追加する派生5列。</p>
+    <table class="tbl">
+      <thead><tr><th>#</th><th>物理名</th><th>型</th><th>出所</th><th>定義</th></tr></thead>
+      <tbody>
+        <tr><td class="t">1</td><td><code>id</code></td><td class="t">VARCHAR</td><td>定義</td><td>レコード単位の通番</td></tr>
+        <tr><td class="t">2</td><td><code>message_id</code></td><td class="t">VARCHAR</td><td>定義</td><td>メール単位の一意ID</td></tr>
+        <tr><td class="t">3</td><td><code>purchased_at</code></td><td class="t">TIMESTAMP</td><td>定義</td><td>購買日時</td></tr>
+        <tr><td class="t">4</td><td><code>ec_site_name</code></td><td class="t">VARCHAR</td><td>定義</td><td>ECサイト名</td></tr>
+        <tr><td class="t">5</td><td><code>unit_price</code></td><td class="t">NUMBER</td><td>定義</td><td>商品単価</td></tr>
+        <tr><td class="t">6</td><td><code>amount</code></td><td class="t">NUMBER</td><td>定義</td><td>購買数量</td></tr>
+        <tr><td class="t">7</td><td><code>total_price</code></td><td class="t">NUMBER</td><td>定義</td><td>合計金額</td></tr>
+        <tr><td class="t">8</td><td><code>user_id_hash</code></td><td class="t">VARCHAR</td><td>定義</td><td>ユーザID</td></tr>
+        <tr><td class="t">9</td><td><code>item_name</code></td><td class="t">VARCHAR</td><td>定義</td><td>商品名（名寄せ後）</td></tr>
+        <tr><td class="t">10</td><td><code>item_url</code></td><td class="t">VARCHAR</td><td>定義</td><td>商品ページURL</td></tr>
+        <tr><td class="t">11</td><td><code>destination_postal_code</code></td><td class="t">VARCHAR</td><td>定義</td><td>配送先郵便番号</td></tr>
+        <tr><td class="t">12</td><td><code>store_name</code></td><td class="t">VARCHAR</td><td>定義</td><td>ストア名</td></tr>
+        <tr><td class="t">13</td><td><code>gender_name</code></td><td class="t">VARCHAR</td><td>定義</td><td>性別</td></tr>
+        <tr><td class="t">14</td><td><code>age</code></td><td class="t">NUMBER</td><td>定義</td><td>年齢</td></tr>
+        <tr><td class="t">15</td><td><code>age_category</code></td><td class="t">VARCHAR</td><td>定義</td><td>年代</td></tr>
+        <tr><td class="t">16</td><td><code>state_name</code></td><td class="t">VARCHAR</td><td>定義</td><td>居住都道府県</td></tr>
+        <tr><td class="t">17</td><td><code>marriage_status</code></td><td class="t">VARCHAR</td><td>定義</td><td>婚姻状況</td></tr>
+        <tr><td class="t">18</td><td><code>profession_name</code></td><td class="t">VARCHAR</td><td>定義</td><td>業種</td></tr>
+        <tr><td class="t">19</td><td><code>occupation_name</code></td><td class="t">VARCHAR</td><td>定義</td><td>職業</td></tr>
+        <tr><td class="t">20–23</td><td><code>category_level_1〜4</code></td><td class="t">VARCHAR</td><td>定義</td><td>商品カテゴリ（1 は NULL 除外済み）</td></tr>
+        <tr><td class="t">24</td><td><code>purchase_date</code></td><td class="t">DATE</td><td><span class="pill der">要件追加</span></td><td>購入日</td></tr>
+        <tr><td class="t">25</td><td><code>purchase_month</code></td><td class="t">DATE</td><td><span class="pill der">要件追加</span></td><td>購入月（月初日）</td></tr>
+        <tr><td class="t">26</td><td><code>region_name</code></td><td class="t">VARCHAR</td><td><span class="pill der">要件追加</span></td><td>地方</td></tr>
+        <tr><td class="t">27</td><td><code>discount_flag</code></td><td class="t">BOOLEAN</td><td><span class="pill der">要件追加</span></td><td>割引フラグ</td></tr>
+        <tr><td class="t">28</td><td><code>discount_amount</code></td><td class="t">NUMBER</td><td><span class="pill der">要件追加</span></td><td>割引額</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="rules">
+    <h2><span class="n">9</span>派生ルール（要件の対応）</h2>
+    <table class="tbl">
+      <thead><tr><th>要件</th><th>置き場所</th><th>ロジック</th></tr></thead>
+      <tbody>
+        <tr><td>購入日 <code>purchase_date</code></td><td><code>dim_date</code></td><td><code>purchased_at::date</code></td></tr>
+        <tr><td>購入月 <code>purchase_month</code></td><td><code>dim_date</code></td><td><code>date_trunc('month', purchased_at)::date</code></td></tr>
+        <tr><td>地方 <code>region_name</code></td><td><code>dim_user</code></td><td><code>prefecture_region</code> シードに <code>state_name</code> で LEFT JOIN</td></tr>
+        <tr><td>年代 <code>age_category</code></td><td><code>dim_user</code></td><td><code>gene_definition</code> に範囲 LEFT JOIN（floor ではない）</td></tr>
+        <tr><td>合計購入金額 <code>total_price</code></td><td><code>fct</code></td><td><code>unit_price * amount</code></td></tr>
+        <tr><td>割引フラグ <code>discount_flag</code></td><td><code>fct</code></td><td><code>item_name ilike '%セール%'</code>（名寄せ前の生の名前）</td></tr>
+        <tr><td>割引額 <code>discount_amount</code></td><td><code>fct</code></td><td><code>max(unit_price) over(partition by item_url) - unit_price</code></td></tr>
+        <tr><td>名寄せ <code>item_name</code></td><td><code>dim_item</code></td><td><code>item_url</code> 単位で代表名を1つに集約</td></tr>
+        <tr><td>カテゴリ1 NULL 除外</td><td><code>dim_item</code></td><td><code>category_level_1 is not null</code></td></tr>
+      </tbody>
+    </table>
+    <div class="note"><b>年代・地方は markdown ではなく seed で持つ。</b>業務定義のルックアップは CSV を <code>dbt seed</code> でロードし、<code>ref()</code> で JOIN する。年代 <code>gene_definition</code> は範囲テーブルなので <code>between</code> 結合（<code>dbt_utils.mutually_exclusive_ranges</code> で隙間・重複を検査可）。地方 <code>prefecture_region</code> は <code>state_name, region_name</code> の47行。</div>
+  </section>
+
+  <section id="dag">
+    <h2><span class="n">10</span>ビルド順・依存DAG</h2>
+    <p class="lead">依存は <code class="mono">sources → staging → (intermediate・seeds) → dims → fct → mart</code> の一方向。</p>
+    <figure class="wide" aria-label="dbt モデルの依存DAG">
+      <svg viewBox="0 0 940 360" role="img">
+        <title>dbt モデル依存DAG</title>
+        <defs><marker id="ah2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M2 1L8 5L2 9" fill="none" stroke="#B4B9C0" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
+        <line x1="140" y1="180" x2="176" y2="180" stroke="#B4B9C0" marker-end="url(#ah2)"/>
+        <line x1="310" y1="180" x2="426" y2="180" stroke="#B4B9C0" marker-end="url(#ah2)"/>
+        <line x1="478" y1="96"  x2="470" y2="150" stroke="#B4B9C0" marker-end="url(#ah2)"/>
+        <line x1="500" y1="300" x2="460" y2="216" stroke="#B4B9C0" marker-end="url(#ah2)"/>
+        <line x1="580" y1="180" x2="636" y2="180" stroke="#B4B9C0" marker-end="url(#ah2)"/>
+        <line x1="780" y1="180" x2="796" y2="180" stroke="#B4B9C0" marker-end="url(#ah2)"/>
+        <rect x="20" y="150" width="120" height="62" rx="10" fill="#ECEEF1" stroke="#B9BEC6"/>
+        <text x="80" y="176" text-anchor="middle" font-size="12.5" font-weight="700" fill="#333A44">RAKUTEN_EC_RAW</text>
+        <text x="80" y="194" text-anchor="middle" font-size="11.5" fill="#5A616B">7 sources</text>
+        <rect x="180" y="150" width="130" height="62" rx="10" fill="#E3F1EC" stroke="#12856A"/>
+        <text x="245" y="176" text-anchor="middle" font-size="12.5" font-weight="700" fill="#0C5E4B" font-family="var(--mono)">stg_rakuten__*</text>
+        <text x="245" y="194" text-anchor="middle" font-size="11.5" fill="#0C5E4B">×7（素通し整形）</text>
+        <rect x="330" y="40" width="150" height="56" rx="10" fill="#E3F1EC" stroke="#12856A"/>
+        <text x="405" y="63" text-anchor="middle" font-size="12" font-weight="700" fill="#0C5E4B" font-family="var(--mono)">int_categories</text>
+        <text x="405" y="80" text-anchor="middle" font-size="11.5" fill="#0C5E4B">階層の平坦化</text>
+        <rect x="330" y="276" width="170" height="60" rx="10" fill="#FBF0DD" stroke="#D9A84E"/>
+        <text x="415" y="299" text-anchor="middle" font-size="12" font-weight="700" fill="#8A5709">seeds</text>
+        <text x="415" y="317" text-anchor="middle" font-size="11" fill="#8A5709" font-family="var(--mono)">gene_definition / 地方</text>
+        <rect x="430" y="118" width="150" height="124" rx="10" fill="#E3F1EC" stroke="#12856A"/>
+        <text x="505" y="142" text-anchor="middle" font-size="12.5" font-weight="800" fill="#0C5E4B">dims ×4</text>
+        <text x="505" y="164" text-anchor="middle" font-size="11.5" fill="#155f4d" font-family="var(--mono)">dim_date</text>
+        <text x="505" y="182" text-anchor="middle" font-size="11.5" fill="#155f4d" font-family="var(--mono)">dim_user</text>
+        <text x="505" y="200" text-anchor="middle" font-size="11.5" fill="#155f4d" font-family="var(--mono)">dim_item</text>
+        <text x="505" y="218" text-anchor="middle" font-size="11.5" fill="#155f4d" font-family="var(--mono)">dim_store</text>
+        <rect x="640" y="150" width="140" height="62" rx="10" fill="#EAE8FA" stroke="#5B54C9" stroke-width="1.4"/>
+        <text x="710" y="176" text-anchor="middle" font-size="12.5" font-weight="800" fill="#3F39A3" font-family="var(--mono)">fct_purchase_item</text>
+        <text x="710" y="194" text-anchor="middle" font-size="11.5" fill="#463fb0">ファクト</text>
+        <rect x="800" y="146" width="120" height="70" rx="10" fill="#D8EDE4" stroke="#0C6E58" stroke-width="1.5"/>
+        <text x="860" y="174" text-anchor="middle" font-size="12.5" font-weight="800" fill="#0A5545" font-family="var(--mono)">mart_rakuten_ec</text>
+        <text x="860" y="193" text-anchor="middle" font-size="11.5" fill="#0A5545">大福帳</text>
+      </svg>
+      <figcaption>図は主要な依存の流れ。実際には <code>fct</code> は staging の購入明細も直接読み、<code>mart</code>（大福帳）は <code>fct</code> と全 <code>dim</code> を結合する。</figcaption>
+    </figure>
+    <table class="tbl">
+      <thead><tr><th>順</th><th>層</th><th>作るもの</th></tr></thead>
+      <tbody>
+        <tr><td class="t">1</td><td>staging</td><td>ソース7表を1:1でクレンジング（<code>stg_rakuten__*</code>）</td></tr>
+        <tr><td class="t">2</td><td>intermediate / dims</td><td><code>int_categories_flatten</code> → <code>dim_item</code>（名寄せ・NULL除外）、<code>dim_user</code>（seed結合）、<code>dim_store</code>、<code>dim_date</code></td></tr>
+        <tr><td class="t">3</td><td>fact</td><td><code>fct_purchase_item</code>（<code>total_price</code>・<code>discount_flag</code>・<code>discount_amount</code> を算出、各 <code>_key</code> を付与）</td></tr>
+        <tr><td class="t">4</td><td>mart</td><td><code>mart_rakuten_ec</code>（ファクト＋全ディメンションを JOIN、28列に整形）</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="sql">
+    <h2><span class="n">11</span>実装 SQL（dbtモデル）</h2>
+    <p class="lead">Snowflake ＋ dbt（<code class="mono">dbt_utils</code> 使用）。各モデルの実体。</p>
+
+    <p class="sqlname">staging（素通し整形の例）</p>
+<pre>-- models/rakuten_ec/staging/stg_rakuten__purchases.sql
+with source as (
+    select * from {{ source('rakuten_ec', 'purchases') }}
+)
+select
+    purchase_id,
+    message_id,
+    purchased_at::timestamp_tz as purchased_at,  -- +0900 を保持して型付け
+    user_id,
+    destination_postal_code
+from source
+-- 購入日/購入月はここで作らない → dim_date。他6表も同様に列名統一のみ</pre>
+
+    <p class="sqlname">int_categories_flatten（カテゴリ階層の平坦化・再帰CTE）</p>
+<pre>-- models/rakuten_ec/intermediate/int_categories_flatten.sql
+with recursive cat as (
+    select * from {{ ref('stg_rakuten__categories') }}
+),
+climb as (
+    -- anchor: 起点そのもの
+    select category_id as leaf_id,
+           category_id, category_name, category_level, parent_category_id
+    from cat
+    union all
+    -- 親カテゴリへ1段ずつ遡る
+    select c.leaf_id,
+           p.category_id, p.category_name, p.category_level, p.parent_category_id
+    from climb c
+    join cat p on p.category_id = c.parent_category_id
+)
+select
+    leaf_id as category_id,
+    max(case when category_level = 1 then category_name end) as category_level_1,
+    max(case when category_level = 2 then category_name end) as category_level_2,
+    max(case when category_level = 3 then category_name end) as category_level_3,
+    max(case when category_level = 4 then category_name end) as category_level_4
+from climb
+group by leaf_id</pre>
+
+    <p class="sqlname">dim_date</p>
+<pre>-- models/rakuten_ec/marts/dim_date.sql
+with spine as (
+    {{ dbt_utils.date_spine(
+        datepart="day",
+        start_date="to_date('2020-01-01')",
+        end_date="dateadd(year, 1, current_date)") }}
+)
+select
+    to_number(to_char(date_day, 'YYYYMMDD')) as date_key,
+    date_day                                 as purchase_date,   -- 購入日
+    date_trunc('month', date_day)            as purchase_month,  -- 購入月（月初日）
+    year(date_day)  as year,
+    month(date_day) as month,
+    day(date_day)   as day
+from spine</pre>
+
+    <p class="sqlname">dim_store</p>
+<pre>-- models/rakuten_ec/marts/dim_store.sql
+select
+    {{ dbt_utils.generate_surrogate_key(['s.store_id']) }} as store_key,
+    s.store_id,
+    s.store_name,
+    e.ec_site_name
+from {{ ref('stg_rakuten__stores') }} s
+left join {{ ref('stg_rakuten__ec_sites') }} e
+       on e.ec_site_id = s.ec_site_id</pre>
+
+    <p class="sqlname">dim_user（年代＝範囲シード / 地方＝都道府県シード）</p>
+<pre>-- models/rakuten_ec/marts/dim_user.sql
+select
+    {{ dbt_utils.generate_surrogate_key(['u.user_id']) }} as user_key,
+    u.user_id           as user_id_hash,
+    u.gender_name,
+    u.age,
+    g.gene              as age_category,   -- 年代（範囲シード gene_definition）
+    u.state_name,                          -- 都道府県（出力名どおり）
+    r.region_name,                         -- 地方（state_name に倣う）
+    u.marriage_status,
+    u.profession_name,
+    u.occupation_name
+from {{ ref('stg_rakuten__users') }} u
+left join {{ ref('gene_definition') }} g
+       on u.age between g.age_lower_limit and g.age_upper_limit
+left join {{ ref('prefecture_region') }} r      -- seed: state_name, region_name
+       on r.state_name = u.state_name</pre>
+
+    <p class="sqlname">dim_item（名寄せ＋カテゴリ結合＋NULL除外）</p>
+<pre>-- models/rakuten_ec/marts/dim_item.sql
+with items as (
+    select * from {{ ref('stg_rakuten__items') }}
+),
+cleaned as (
+    select
+        item_id, item_url, category_id, item_name,
+        trim(regexp_replace(replace(
+            regexp_replace(item_name,
+                '^(＼[^／]*／|[0-9]+円以上からご注文可能)[[:space:]]*', ''),  -- セール枠等を除去
+            '　', ' '),                          -- 全角スペース→半角
+            '[[:space:]]+', ' ')) as item_name_clean  -- 連続空白→1個
+    from items
+),
+name_freq as (
+    select item_url, item_name_clean, count(*) as cnt
+    from cleaned group by 1, 2
+),
+ranked as (
+    select c.*, f.cnt,
+        row_number() over (
+            partition by c.item_url
+            order by f.cnt desc, length(c.item_name_clean) desc, c.item_id
+        ) as rn
+    from cleaned c
+    join name_freq f
+      on f.item_url = c.item_url and f.item_name_clean = c.item_name_clean
+)
+select
+    {{ dbt_utils.generate_surrogate_key(['r.item_url']) }} as item_key,
+    r.item_url,
+    r.item_name_clean as item_name,          -- 名寄せ後の代表名
+    cat.category_level_1, cat.category_level_2,
+    cat.category_level_3, cat.category_level_4
+from ranked r
+left join {{ ref('int_categories_flatten') }} cat
+       on cat.category_id = r.category_id
+where r.rn = 1
+  and cat.category_level_1 is not null       -- カテゴリ1 NULL の商品を除外</pre>
+
+    <p class="sqlname">fct_purchase_item（measure＋各キー、割引フラグは生の名前から）</p>
+<pre>-- models/rakuten_ec/marts/fct_purchase_item.sql
+with pi as (select * from {{ ref('stg_rakuten__purchase_items') }}),
+     p  as (select * from {{ ref('stg_rakuten__purchases') }}),
+     it as (select * from {{ ref('stg_rakuten__items') }})   -- 生の item_name（割引フラグ用）
+select
+    pi.purchase_item_id,
+    pi.purchase_id,
+    p.message_id,
+    p.purchased_at,
+    to_number(to_char(p.purchased_at::date, 'YYYYMMDD'))     as date_key,
+    {{ dbt_utils.generate_surrogate_key(['p.user_id']) }}    as user_key,
+    {{ dbt_utils.generate_surrogate_key(['it.item_url']) }}  as item_key,
+    {{ dbt_utils.generate_surrogate_key(['it.store_id']) }}  as store_key,
+    p.destination_postal_code,
+    pi.unit_price,
+    pi.amount,
+    pi.unit_price * pi.amount                                as total_price,
+    it.item_name ilike '%セール%'                            as discount_flag,   -- 生の名前で判定
+    max(pi.unit_price) over (partition by it.item_url) - pi.unit_price as discount_amount
+from pi
+join p  on p.purchase_id = pi.purchase_id
+join it on it.item_id    = pi.item_id</pre>
+
+    <p class="sqlname">mart_rakuten_ec（大福帳・28列に整形）</p>
+<pre>-- models/rakuten_ec/marts/mart_rakuten_ec.sql
+select
+    f.purchase_item_id  as id,
+    f.message_id,
+    f.purchased_at,
+    s.ec_site_name,
+    f.unit_price,
+    f.amount,
+    f.total_price,
+    u.user_id_hash,
+    i.item_name,
+    i.item_url,
+    f.destination_postal_code,
+    s.store_name,
+    u.gender_name,
+    u.age,
+    u.age_category,
+    u.state_name,
+    u.marriage_status,
+    u.profession_name,
+    u.occupation_name,
+    i.category_level_1, i.category_level_2, i.category_level_3, i.category_level_4,
+    d.purchase_date,
+    d.purchase_month,
+    u.region_name,
+    f.discount_flag,
+    f.discount_amount
+from {{ ref('fct_purchase_item') }} f
+join {{ ref('dim_item') }}  i on i.item_key  = f.item_key    -- inner join → カテゴリ1 NULL商品は除外
+join {{ ref('dim_user') }}  u on u.user_key  = f.user_key
+join {{ ref('dim_store') }} s on s.store_key = f.store_key
+join {{ ref('dim_date') }}  d on d.date_key  = f.date_key</pre>
+  </section>
+
+  <footer>
+    先進情報プロジェクト演習 I ／ 楽天EC 大福帳 テーブル設計 — Snowflake ＋ dbt（project <code class="mono">ds_intern</code>）
+  </footer>
+
+  </main>
+</div>
+</div>
+</body>
+</html>
