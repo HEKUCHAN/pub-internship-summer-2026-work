@@ -1,5 +1,10 @@
 .env
 
+# Snowflake キーペア認証用の鍵（秘密鍵を含むため丸ごと除外）
+.ssh/
+*.p8
+*.pem
+
 target/
 dbt_packages/
 logs/

@@ -40,7 +40,7 @@ $ cp .env.example .env
 
 
 # dbt
-export TEAM_NAME='<チーム名を大文字アルファベットで>'
+export TEAM_NAME='<チーム名を大文字アルファベットで、`TEAM_X`の形式（例: TEAM_A）>'
 
 
 

@@ -6,8 +6,8 @@ ds_intern:
       account: on44798-ds_5daysinternship_2026
 
       user: "{{ env_var('SNOWFLAKE_USER') }}"
-      password: "{{ env_var('SNOWFLAKE_PASSWORD') }}"
-      authenticator: username_password_mfa
+      authenticator: SNOWFLAKE_JWT
+      private_key_path: "{{ env_var('PRIVATE_KEY_FILE') }}"
       role: INTERNSHIP_MEMBER
       database: "{{ env_var('TEAM_NAME') }}_DB"
       warehouse: "{{ env_var('TEAM_NAME') }}_WH"
@@ -20,8 +20,8 @@ ds_intern:
       account: on44798-ds_5daysinternship_2026
 
       user: "{{ env_var('SNOWFLAKE_USER') }}"
-      password: "{{ env_var('SNOWFLAKE_PASSWORD') }}"
-      authenticator: username_password_mfa
+      authenticator: SNOWFLAKE_JWT
+      private_key_path: "{{ env_var('PRIVATE_KEY_FILE') }}"
       role: INTERNSHIP_MEMBER
       database: "{{ env_var('TEAM_NAME') }}_DB"
       warehouse: "{{ env_var('TEAM_NAME') }}_WH"
@@ -34,8 +34,8 @@ ds_intern:
       account: on44798-ds_5daysinternship_2026
 
       user: "{{ env_var('SNOWFLAKE_USER') }}"
-      password: "{{ env_var('SNOWFLAKE_PASSWORD') }}"
-      authenticator: username_password_mfa
+      authenticator: SNOWFLAKE_JWT
+      private_key_path: "{{ env_var('PRIVATE_KEY_FILE') }}"
       role: INTERNSHIP_MEMBER
       database: "{{ env_var('TEAM_NAME') }}_DB"
       warehouse: "{{ env_var('TEAM_NAME') }}_WH"
