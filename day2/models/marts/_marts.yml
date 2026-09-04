@@ -39,8 +39,7 @@ models:
 
   - name: mart_rakuten_ec
     description: >
-      大福帳。テーブル定義.xlsx の23列（message_id を除く）＋ 派生5列
-      （full_date / month_date / region / is_discount / discount_amount）。
+      大福帳。テーブル定義.xlsx の23列（message_id は取得・出力とも不要）。
       instructor 回答④により category_level_1 が NULL の行は削除済み。
     columns:
       - name: id
@@ -49,7 +48,5 @@ models:
       - name: category_level_1
         description: 商品カテゴリ第1階層（NULL 行は除外済み）
         tests: [not_null]
-      - name: month_date
-        description: 購入月＝月初日（date 型）
       - name: age_category
         description: 年代（age から導出。age が NULL なら NULL）

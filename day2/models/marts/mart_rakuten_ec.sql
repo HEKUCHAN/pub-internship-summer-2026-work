@@ -1,8 +1,8 @@
--- 大福帳: テーブル定義.xlsx の23列 ＋ 課題スライドの派生列（購入日 / 購入月 / 地方 / 割引フラグ / 割引額）。
--- grain: 1購入明細＝1行。ただし instructor 回答④により category_level_1 が NULL の行は削除する
---        （CATEGORIES を category_id → parent_category_id で遡って第1階層に到達しない＝
+-- 大福帳: テーブル定義.xlsx の23列（message_id は取得・出力とも不要のためコメントで位置のみ）。
+-- grain: 1購入明細＝1行。instructor 回答④により category_level_1 が NULL の行は削除する
+--        （CATEGORIES を category_id → parent_category_id で遡って第1階層に到達しない行。
 --         実データでは item_id 欠損 or 商品の category_id 欠損の行、約22.6万行）。
--- item_name のみ名寄せ後（int_items__name_resolved）を採用。message_id は取得・出力とも不要（ソースに列が無い）。
+-- item_name のみ名寄せ後（int_items__name_resolved）を採用。
 with fct as (
 
     select * from {{ ref('fct_purchase_item') }}
@@ -44,7 +44,6 @@ stores as (
 final as (
 
     select
-        -- ── テーブル定義.xlsx の23列 ──────────────────────────────
         fct.purchase_item_id                                as id,
         -- message_id                                       -- #2: 取得・出力とも不要（ソースに列が無い）
         fct.purchased_at,
@@ -67,13 +66,7 @@ final as (
         categories.category_level_1,
         categories.category_level_2,
         categories.category_level_3,
-        categories.category_level_4,
-        -- ── 課題スライドの派生列 ──────────────────────────────────
-        fct.purchased_at::date                              as full_date,    -- 購入日（例: 2023-04-02 09:00 → 2023-04-02）
-        date_trunc('month', fct.purchased_at)::date         as month_date,   -- 購入月＝月初日 date型（→ 2023-04-01）
-        users.region_name                                  as region,        -- 地方（8地方区分）
-        fct.is_discount,                                                     -- 割引フラグ（item_name に「セール」を含む）
-        fct.discount_amount                                                 -- 割引額（item_url 内の最大単価 − unit_price）
+        categories.category_level_4
     from fct
     left join items_raw       on items_raw.item_id       = fct.item_id
     left join items_resolved  on items_resolved.item_url = items_raw.item_url
