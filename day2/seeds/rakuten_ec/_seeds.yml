@@ -13,3 +13,16 @@ seeds:
         description: 8地方区分（北海道/東北/関東/中部/近畿/中国/四国/九州）＋不明
         tests:
           - not_null
+
+  - name: gene_definition
+    description: 年代定義テーブル
+    columns:
+      - name: age_lower_limit
+        description: 年齢下限
+        column_type: number
+      - name: age_upper_limit
+        description: 年齢上限
+        column_type: number
+      - name: gene
+        description: 年代
+        column_type: varchar
